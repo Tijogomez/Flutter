@@ -37,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     contentPadding: EdgeInsets.symmetric(vertical: 15.0),
                     fillColor: Colors.white,
                     filled: true,
-                    hintText: 'UserName',
+                    hintText: 'Name',
                     prefixIcon: Icon(
                       Icons.account_box,
                       size: 30.0,
