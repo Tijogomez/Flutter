@@ -28,6 +28,7 @@ class DetailPage extends StatefulWidget {
 class _DetailPageState extends State<DetailPage> {
   @override
   Widget build(BuildContext context) {
+    final double statusBarHeight = MediaQuery.of(context).padding.top;
     String author = widget.author;
     String title = widget.title;
     String imageUrl = widget.imageUrl;
@@ -69,6 +70,27 @@ class _DetailPageState extends State<DetailPage> {
                         });
                       }
                     },
+                  ),
+                ),
+              ),
+              Positioned(
+                top: statusBarHeight + 10.0,
+                left: 10.0,
+                child: Center(
+                  child: Container(
+                    child: CircleAvatar(
+                      backgroundColor: Colors.black.withOpacity(0.5),
+                      child: IconButton(
+                        icon: Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                      radius: 20.0,
+                    ),
                   ),
                 ),
               )
