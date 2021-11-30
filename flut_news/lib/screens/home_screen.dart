@@ -132,7 +132,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                       EdgeInsets.symmetric(horizontal: 1.0),
                                   child: Center(
                                     child: Card(
-                                      color: Colors.blueAccent,
+                                      color: selectedCategory == index
+                                          ? Colors.white
+                                          : Colors.blueAccent,
                                       child: InkWell(
                                         onTap: () {
                                           setCategory(index);
@@ -143,7 +145,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                           child: Text(
                                             categories[index],
                                             style: TextStyle(
-                                              color: Colors.white,
+                                              color: selectedCategory == index
+                                                  ? Colors.blueAccent
+                                                  : Colors.white,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
