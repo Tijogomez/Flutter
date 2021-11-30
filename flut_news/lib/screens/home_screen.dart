@@ -2,7 +2,7 @@ import 'package:flut_news/screens/widgets/custom_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'details_page.dart';
 
 final List categories = [
@@ -20,15 +20,16 @@ final List categories = [
   'Science',
   'Automobile',
 ];
-
 var snapshotData;
 List favList = [];
-int selectedCategory = 0;
+SharedPreferences? savedCategory;
+int selectedCategory = (savedCategory?.getInt('selectedCategory') ?? 0);
 
 String url =
     'https://inshortsapi.vercel.app/news?category=${categories[selectedCategory].toString().toLowerCase()}';
 
 Future _fetchApi() async {
+  print(selectedCategory);
   final response = await http.get(Uri.parse(url));
   if (response.statusCode == 200) {
     final body = json.decode(response.body);
@@ -44,11 +45,21 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  Future<void> initializePreference() async {
+    savedCategory = await SharedPreferences.getInstance();
+  }
+
+  void initState() {
+    super.initState();
+    initializePreference().whenComplete(() => setState(() {}));
+  }
+
   void setCategory(int index) {
     setState(() {
       selectedCategory = index;
       url =
           'https://inshortsapi.vercel.app/news?category=${categories[selectedCategory].toString().toLowerCase()}';
+      savedCategory?.setInt('selectedCategory', selectedCategory);
     });
   }
 
