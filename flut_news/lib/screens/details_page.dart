@@ -1,3 +1,4 @@
+import 'package:flut_news/data/News.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -8,18 +9,17 @@ import 'home_screen.dart';
 class DetailPage extends StatefulWidget {
   DetailPage(
       {Key? key,
-      required this.author,
-      required this.title,
       required this.imageUrl,
       required this.content,
-      required this.url})
+      required this.title,
+      required this.author,
+      required this.isFavourite,
+      required this.onFavouriteClick})
       : super(key: key);
 
-  String author;
-  String title;
-  String imageUrl;
-  String content;
-  String url;
+  String imageUrl, title, content, author;
+  bool isFavourite;
+  Function onFavouriteClick;
 
   @override
   _DetailPageState createState() => _DetailPageState();
@@ -29,12 +29,11 @@ class _DetailPageState extends State<DetailPage> {
   @override
   Widget build(BuildContext context) {
     final double statusBarHeight = MediaQuery.of(context).padding.top;
-    String author = widget.author;
-    String title = widget.title;
-    String imageUrl = widget.imageUrl;
-    String content = widget.content;
-    String url = widget.url;
-    bool isFavorite = false;
+    String imageUrl = widget.imageUrl,
+        title = widget.title,
+        content = widget.content,
+        author = widget.author;
+    bool isFavourite = widget.isFavourite;
 
     return Scaffold(
       body: Column(
@@ -43,7 +42,7 @@ class _DetailPageState extends State<DetailPage> {
             children: [
               Container(
                 child: Image.network(
-                  widget.imageUrl,
+                  imageUrl,
                   height: 200.0,
                   width: 200.0,
                   fit: BoxFit.cover,
@@ -56,19 +55,11 @@ class _DetailPageState extends State<DetailPage> {
                 right: 10.0,
                 child: Center(
                   child: StarButton(
-                    isStarred: favList.contains(title) ? true : false,
+                    isStarred: isFavourite,
                     valueChanged: (_isFavorite) {
-                      if (!favList.contains(widget.title)) {
-                        setState(() {
-                          isFavorite = _isFavorite;
-                          favList.add(widget.title);
-                        });
-                      } else {
-                        setState(() {
-                          isFavorite = _isFavorite;
-                          favList.remove(widget.title);
-                        });
-                      }
+                      setState(() {
+                        widget.onFavouriteClick(!isFavourite);
+                      });
                     },
                   ),
                 ),
@@ -106,7 +97,7 @@ class _DetailPageState extends State<DetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.title,
+                    title,
                     style:
                         TextStyle(fontSize: 27.0, fontWeight: FontWeight.bold),
                   ),
@@ -114,7 +105,7 @@ class _DetailPageState extends State<DetailPage> {
                     height: 15.0,
                   ),
                   Text(
-                    widget.content,
+                    content,
                     style: TextStyle(
                         fontSize: 17.0,
                         fontWeight: FontWeight.w400,
@@ -124,7 +115,7 @@ class _DetailPageState extends State<DetailPage> {
                     height: 10.0,
                   ),
                   Text(
-                    "By, ${widget.author}",
+                    "By, $author",
                     style: TextStyle(
                       fontSize: 12.0,
                       fontWeight: FontWeight.w400,

@@ -1,3 +1,4 @@
+import 'package:flut_news/data/UserSource.dart';
 import 'package:flut_news/screens/widgets/custom_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -15,6 +16,8 @@ Future _fetchApi() async {
     throw Exception('Failed to load');
   }
 }
+
+var profileSnapshotData;
 
 String dateTimeConvertor(String date) {
   DateTime dateTime = DateTime.parse(date);
@@ -52,6 +55,7 @@ class _ProfilePageState extends State<ProfilePage> {
         future: _fetchApi(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
+            profileSnapshotData = snapshot;
             return SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -64,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Container(
                         width: MediaQuery.of(context).size.width * 0.3,
                         child: Image.network(
-                          snapshot.data['results'][0]['picture']['large'],
+                          user!.imageUrl,
                           height: 50,
                           width: 50,
                         ),
@@ -72,16 +76,14 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                   Text(
-                    snapshot.data['results'][0]['name']['first'] +
-                        ' ' +
-                        snapshot.data['results'][0]['name']['last'],
+                    user!.firstName + ' ' + user!.lastName,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
-                    '#' + snapshot.data['results'][0]['login']['username'],
+                    '#' + user!.username,
                     style: TextStyle(
                       fontSize: 20,
                       color: Colors.grey,
@@ -115,8 +117,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     height: 5,
                                   ),
                                   Text(
-                                    dateTimeConvertor(snapshot.data['results']
-                                        [0]['registered']['date']),
+                                    dateTimeConvertor(user!.joinDate),
                                     style: TextStyle(
                                       fontSize: 17,
                                       color: Colors.black87,

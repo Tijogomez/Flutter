@@ -14,21 +14,14 @@ class Favourites extends StatefulWidget {
 
 class _FavouritesState extends State<Favourites> {
   List favourites = [];
-  int newsLength = snapshotData.length;
 
-  void _getFavourites() {
-    print("start");
-    for (var i = 0; i < newsLength; i++) {
-      if (favList.contains(snapshotData['data'][i]['title'])) {
-        favourites.add(snapshotData['data'][i]);
-      }
-    }
-  }
+  void _getFavs() =>
+      {favourites = allNews.where((news) => news.isFavourite).toList()};
 
   @override
   void initState() {
     super.initState();
-    _getFavourites();
+    _getFavs();
   }
 
   @override
@@ -47,6 +40,16 @@ class _FavouritesState extends State<Favourites> {
               color: Colors.blueAccent,
             ),
           ),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.refresh),
+              onPressed: () {
+                setState(() {
+                  _getFavs();
+                });
+              },
+            ),
+          ],
         ),
         drawer: CustomDrawer(),
         body: ListView.builder(
@@ -56,13 +59,13 @@ class _FavouritesState extends State<Favourites> {
             return Card(
               child: ListTile(
                 leading: Image.network(
-                  favourites[index]['imageUrl'],
+                  favourites[index].imageUrl,
                   height: 50.0,
                   width: 60.0,
                   fit: BoxFit.cover,
                 ),
                 title: Text(
-                  favourites[index]['title'].toString(),
+                  favourites[index].title,
                   style: TextStyle(
                     fontSize: 15.0,
                     fontWeight: FontWeight.w600,
@@ -74,12 +77,13 @@ class _FavouritesState extends State<Favourites> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => DetailPage(
-                        author: favourites[index]['author'],
-                        title: favourites[index]['title'],
-                        imageUrl: favourites[index]['imageUrl'],
-                        content: favourites[index]['content'],
-                        url: favourites[index]['url'],
-                      ),
+                          author: favourites[index].author,
+                          title: favourites[index].title,
+                          imageUrl: favourites[index].imageUrl,
+                          content: favourites[index].content,
+                          isFavourite: favourites[index].isFavourite,
+                          onFavouriteClick: ((isFavourite) =>
+                              {favourites[index].isFavourite = isFavourite})),
                     ),
                   );
                 },
@@ -102,6 +106,15 @@ class _FavouritesState extends State<Favourites> {
               color: Colors.blueAccent,
             ),
           ),
+          actions: [
+            IconButton(
+                onPressed: () {
+                  setState(() {
+                    _getFavs();
+                  });
+                },
+                icon: Icon(Icons.refresh))
+          ],
         ),
         drawer: CustomDrawer(),
         body: Center(

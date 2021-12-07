@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'details_page.dart';
+import '../data/News.dart';
 
 final List categories = [
   'All',
@@ -20,22 +21,53 @@ final List categories = [
   'Science',
   'Automobile',
 ];
+
+void saveToPref(selectedIndex) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.setInt('selectedIndex', selectedIndex);
+}
+
+void getSelectedCategoryIndexFromPref() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  int index = await prefs.getInt('selectedIndex') ?? 0;
+  selectedCategory = index;
+}
+
 var snapshotData;
 List favList = [];
+List allNews = [];
+List filteredNews = [];
+bool _isInSearchMode = false;
+
 SharedPreferences? savedCategory;
-int selectedCategory = (savedCategory?.getInt('selectedCategory') ?? 0);
+int selectedCategory = (savedCategory?.getInt('selectedIndex') ?? 0);
+
+void searchNews(text) {
+  if (text.isEmpty) {
+    filteredNews.clear();
+    return;
+  }
+  filteredNews.clear();
+  filteredNews.addAll(allNews.where((news) => news.title.contains(text)));
+}
 
 String url =
     'https://inshortsapi.vercel.app/news?category=${categories[selectedCategory].toString().toLowerCase()}';
 
 Future _fetchApi() async {
-  print(selectedCategory);
+  // print(selectedCategory);
   final response = await http.get(Uri.parse(url));
   if (response.statusCode == 200) {
     final body = json.decode(response.body);
-    return body;
+    List news = body['data']
+        .map((news) => News(
+            news['title'], news['author'], news['content'], news['imageUrl']))
+        .toList();
+    allNews = news;
+    return true;
   } else {
-    throw Exception('Failed to load');
+    return false;
+    // throw Exception('Failed to load');
   }
 }
 
@@ -51,7 +83,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void initState() {
     super.initState();
-    initializePreference().whenComplete(() => setState(() {}));
+    getSelectedCategoryIndexFromPref();
+    // initializePreference().whenComplete(() => setState(() {}));
   }
 
   void setCategory(int index) {
@@ -91,21 +124,31 @@ class _HomeScreenState extends State<HomeScreen> {
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12.0),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(vertical: 15.0),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30.0),
-                        borderSide: BorderSide(width: 0.8),
-                      ),
-                      hintText: 'Search Categories',
-                      prefixIcon: Icon(
-                        Icons.search,
-                        size: 30.0,
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(Icons.clear),
-                        onPressed: () {},
+                  child: Focus(
+                    onFocusChange: (hasFocus) {},
+                    child: TextField(
+                      onChanged: (text) {
+                        searchNews(text);
+                      },
+                      decoration: InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(vertical: 15.0),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30.0),
+                          borderSide: BorderSide(width: 0.8),
+                        ),
+                        hintText: 'Search News',
+                        prefixIcon: Icon(
+                          Icons.search,
+                          size: 30.0,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(Icons.check),
+                          onPressed: () {
+                            setState(() {
+                              _isInSearchMode = filteredNews.isNotEmpty;
+                            });
+                          },
+                        ),
                       ),
                     ),
                   ),
@@ -148,6 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           : Colors.blueAccent,
                                       child: InkWell(
                                         onTap: () {
+                                          saveToPref(index);
                                           setCategory(index);
                                         },
                                         splashColor: Colors.white30,
@@ -199,20 +243,26 @@ class _HomeScreenState extends State<HomeScreen> {
                                   const EdgeInsets.symmetric(vertical: 12.0),
                               child: ListView.builder(
                                 shrinkWrap: true,
-                                itemCount: snapshot.data['data'].length,
+                                itemCount: _isInSearchMode
+                                    ? filteredNews.length
+                                    : allNews.length,
                                 itemBuilder: (BuildContext context, int index) {
                                   return Card(
                                     child: ListTile(
                                       leading: Image.network(
-                                        snapshot.data['data'][index]
-                                            ['imageUrl'],
+                                        _isInSearchMode
+                                            ? filteredNews[index].imageUrl
+                                            : allNews[index].imageUrl,
                                         height: 50.0,
                                         width: 60.0,
                                         fit: BoxFit.cover,
                                       ),
                                       title: Text(
-                                        snapshot.data['data'][index]['title']
-                                            .toString(),
+                                        _isInSearchMode
+                                            ? filteredNews[index]
+                                                .title
+                                                .toString()
+                                            : allNews[index].title.toString(),
                                         style: TextStyle(
                                           fontSize: 15.0,
                                           fontWeight: FontWeight.w600,
@@ -223,19 +273,34 @@ class _HomeScreenState extends State<HomeScreen> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => DetailPage(
-                                              author: snapshot.data['data']
-                                                  [index]['author'],
-                                              title: snapshot.data['data']
-                                                  [index]['title'],
-                                              imageUrl: snapshot.data['data']
-                                                  [index]['imageUrl'],
-                                              content: snapshot.data['data']
-                                                  [index]['content'],
-                                              url: snapshot.data['data'][index]
-                                                  ['url'],
-                                            ),
-                                          ),
+                                              builder: (context) => DetailPage(
+                                                  author: _isInSearchMode
+                                                      ? filteredNews[index]
+                                                          .author
+                                                      : allNews[index].author,
+                                                  title: _isInSearchMode
+                                                      ? filteredNews[index]
+                                                          .title
+                                                      : allNews[index].title,
+                                                  imageUrl: _isInSearchMode
+                                                      ? filteredNews[index]
+                                                          .imageUrl
+                                                      : allNews[index].imageUrl,
+                                                  content: _isInSearchMode
+                                                      ? filteredNews[index]
+                                                          .content
+                                                      : allNews[index].content,
+                                                  isFavourite: _isInSearchMode
+                                                      ? filteredNews[index]
+                                                          .isFavourite
+                                                      : allNews[index]
+                                                          .isFavourite,
+                                                  onFavouriteClick:
+                                                      ((isFavourite) => {
+                                                            allNews[index]
+                                                                    .isFavourite =
+                                                                isFavourite
+                                                          }))),
                                         );
                                       },
                                     ),

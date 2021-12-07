@@ -1,3 +1,4 @@
+import 'package:flut_news/data/UserSource.dart';
 import 'package:flut_news/screens/dashboard.dart';
 import 'package:flutter/material.dart';
 
@@ -9,6 +10,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  bool isLoading = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,30 +67,37 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 30.0),
               GestureDetector(
-                onTap: () => Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => Dashboard(),
-                  ),
-                ),
+                onTap: () async {
+                  try {
+                    setState(() {
+                      isLoading = true;
+                    });
+                    if (await getUser()) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => Dashboard(),
+                        ),
+                      );
+                      setState(() {
+                        isLoading = false;
+                      });
+                    }
+                  } catch (e) {
+                    // Show Error
+                  }
+                },
                 child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 60.0),
-                  alignment: Alignment.center,
-                  height: 45.0,
-                  decoration: BoxDecoration(
-                    color: Colors.blueAccent,
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22.0,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.5,
+                    margin: const EdgeInsets.symmetric(horizontal: 60.0),
+                    alignment: Alignment.center,
+                    height: 45.0,
+                    decoration: BoxDecoration(
+                      color: Colors.blueAccent,
+                      borderRadius: BorderRadius.circular(20.0),
                     ),
-                  ),
-                ),
+                    child: isLoading
+                        ? const _LoadIndicator()
+                        : const _LoginText()),
               ),
               Expanded(
                 child: Align(
@@ -113,6 +123,38 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _LoadIndicator extends StatelessWidget {
+  const _LoadIndicator({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: FittedBox(
+          child: const CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+      )),
+    );
+  }
+}
+
+class _LoginText extends StatelessWidget {
+  const _LoginText({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text(
+      'Login',
+      style: TextStyle(
+        color: Colors.white,
+        fontSize: 22.0,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.5,
       ),
     );
   }

@@ -1,6 +1,10 @@
+import 'package:flut_news/data/UserSource.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../profile_page.dart';
 
 import '../../main.dart';
+import '../dashboard.dart';
 
 class CustomDrawer extends StatelessWidget {
   _buildDrawerItems(Icon icon, String title, Function onTap) {
@@ -34,45 +38,52 @@ class CustomDrawer extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      width: 3.0,
-                      color: Colors.blueAccent,
+                      width: 1.5,
+                      color: Colors.grey,
                     ),
                   ),
                   child: ClipOval(
-                    child: Icon(Icons.person),
+                    child: Image.network(
+                      user!.imageUrl,
+                      height: 50,
+                      width: 50,
+                    ),
                   ),
                 ),
-                SizedBox(width: 6.0),
-                Text(
-                  'UserName',
-                  style: TextStyle(
-                    color: Colors.blueAccent,
-                    fontSize: 25.0,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
+                Padding(
+                  padding: EdgeInsets.all(15.0),
+                  child: Text(
+                    "#" + user!.username,
+                    style: TextStyle(fontSize: 20, color: Colors.grey),
                   ),
                 )
               ],
             ),
             SizedBox(
-              height: 25.0,
+              height: 10.0,
             ),
-            _buildDrawerItems(
-                Icon(Icons.panorama_photosphere), 'World News', () {}),
-            _buildDrawerItems(
-                Icon(Icons.panorama_wide_angle_outlined), 'Local  News', () {}),
-            _buildDrawerItems(
-                Icon(Icons.new_releases_rounded), 'Whats New', () {}),
+            _buildDrawerItems(Icon(Icons.home), 'Home', () {
+              controller.index = 0;
+            }),
+            _buildDrawerItems(Icon(Icons.favorite), 'Favourites', () {
+              controller.index = 1;
+            }),
+            _buildDrawerItems(Icon(Icons.account_box), 'Profile Page', () {
+              controller.index = 2;
+            }),
             Expanded(
-              child: Align(
-                alignment: FractionalOffset.bottomCenter,
-                child: _buildDrawerItems(
-                  Icon(Icons.logout),
-                  'LogOut',
-                  () => Navigator.pushReplacement(
-                    context,
-                    new MaterialPageRoute(
-                      builder: (BuildContext context) => new MyApp(),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 80.0),
+                child: Align(
+                  alignment: FractionalOffset.bottomCenter,
+                  child: _buildDrawerItems(
+                    Icon(Icons.logout),
+                    'LogOut',
+                    () => Navigator.of(context, rootNavigator: true)
+                        .pushReplacement(
+                      new CupertinoPageRoute(
+                        builder: (BuildContext context) => new MyApp(),
+                      ),
                     ),
                   ),
                 ),

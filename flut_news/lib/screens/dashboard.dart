@@ -4,6 +4,8 @@ import 'package:flut_news/screens/profile_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+CupertinoTabController controller = CupertinoTabController();
+
 class Dashboard extends StatefulWidget {
   @override
   _DashboardState createState() => _DashboardState();
@@ -25,7 +27,13 @@ class _DashboardState extends State<Dashboard> {
 
   @override
   Widget build(BuildContext context) {
+    void dispose() {
+      controller.dispose();
+      super.dispose();
+    }
+
     return CupertinoTabScaffold(
+      controller: controller,
       tabBar: CupertinoTabBar(
         items: [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
