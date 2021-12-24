@@ -41,6 +41,7 @@ dependencies:
   favorite_button: ^0.0.4
   flutter_launcher_icons: ^0.9.2
   shared_preferences: ^2.0.9
+  sqflite: ^2.0.1
   # url_launcher: ^6.0.15
 
 dev_dependencies:

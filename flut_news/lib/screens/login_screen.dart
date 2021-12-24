@@ -1,6 +1,10 @@
-import 'package:flut_news/data/UserSource.dart';
+import 'package:flut_news/data/db/UserDataSource.dart';
 import 'package:flut_news/screens/dashboard.dart';
+import 'package:flut_news/screens/signup_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+
+import 'forgot_password.dart';
 
 class LoginScreen extends StatefulWidget {
   LoginScreen({Key? key}) : super(key: key);
@@ -11,6 +15,14 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool isLoading = false;
+
+  final UserDataSource dataSource = UserDataSource();
+
+  String username = "", password = "";
+
+  Future<bool> loginUser() async {
+    return await dataSource.authenticate(username, password);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,14 +45,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 10.0),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                 child: TextField(
+                  onChanged: (value) {
+                    username = value;
+                  },
                   decoration: InputDecoration(
                     contentPadding: EdgeInsets.symmetric(vertical: 15.0),
                     fillColor: Colors.white,
                     filled: true,
-                    hintText: 'Name',
+                    hintText: 'UserName',
                     prefixIcon: Icon(
                       Icons.account_box,
                       size: 30.0,
@@ -49,9 +64,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 10.0),
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
                 child: TextField(
+                  onChanged: (value) {
+                    password = value;
+                  },
                   decoration: InputDecoration(
                     contentPadding: EdgeInsets.symmetric(vertical: 15.0),
                     fillColor: Colors.white,
@@ -65,57 +83,100 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: true,
                 ),
               ),
-              const SizedBox(height: 30.0),
-              GestureDetector(
-                onTap: () async {
-                  try {
-                    setState(() {
-                      isLoading = true;
-                    });
-                    if (await getUser()) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => Dashboard(),
-                        ),
-                      );
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: GestureDetector(
+                  onTap: () async {
+                    try {
                       setState(() {
-                        isLoading = false;
+                        isLoading = true;
                       });
+                      if (await loginUser()) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => Dashboard(),
+                          ),
+                        );
+                      } else {
+                        setState(() {
+                          isLoading = false;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Login Failed'),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      // Show Error
                     }
-                  } catch (e) {
-                    // Show Error
-                  }
-                },
-                child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 60.0),
-                    alignment: Alignment.center,
-                    height: 45.0,
-                    decoration: BoxDecoration(
+                  },
+                  child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 60.0),
+                      alignment: Alignment.center,
+                      height: 45.0,
+                      decoration: BoxDecoration(
+                        color: Colors.blueAccent,
+                        borderRadius: BorderRadius.circular(20.0),
+                      ),
+                      child: isLoading
+                          ? const _LoadIndicator()
+                          : const _LoginText()),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(1.0),
+                child: TextButton(
+                  child: Text(
+                    'Forgot Password',
+                    style: TextStyle(
                       color: Colors.blueAccent,
-                      borderRadius: BorderRadius.circular(20.0),
+                      fontSize: 13.0,
+                      fontWeight: FontWeight.bold,
                     ),
-                    child: isLoading
-                        ? const _LoadIndicator()
-                        : const _LoginText()),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                        context, MaterialPageRoute(builder: (_) => ForgotPW()));
+                  },
+                ),
               ),
               Expanded(
                 child: Align(
                   alignment: FractionalOffset.bottomCenter,
                   child: GestureDetector(
-                    onTap: () {},
-                    child: Container(
-                      alignment: Alignment.center,
-                      color: Colors.blueAccent,
-                      height: 50.0,
-                      child: const Text(
-                        'Sign Up',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20.0,
-                          fontWeight: FontWeight.w500,
+                    onTap: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (_) => SignupForm()));
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Text(
+                            'Dont Have an Account ?',
+                            style: TextStyle(
+                                color: Colors.blueAccent,
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold),
+                          ),
                         ),
-                      ),
+                        Container(
+                          alignment: Alignment.center,
+                          color: Colors.blueAccent,
+                          height: 50.0,
+                          child: Text(
+                            'Sign Up',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20.0,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

@@ -1,12 +1,18 @@
-import 'package:flut_news/data/UserSource.dart';
+import 'package:flut_news/data/db/UserDataSource.dart';
+import 'package:flut_news/data/db/NewsDataSource.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../profile_page.dart';
 
 import '../../main.dart';
 import '../dashboard.dart';
 
 class CustomDrawer extends StatelessWidget {
+  final NewsDataSource newsDataSource = NewsDataSource();
+
+  Future clearDatabase() async {
+    await newsDataSource.deleteAll();
+  }
+
   _buildDrawerItems(Icon icon, String title, Function onTap) {
     return ListTile(
       leading: icon,
@@ -21,6 +27,8 @@ class CustomDrawer extends StatelessWidget {
       ),
     );
   }
+
+  final user = UserDataSource.loggedInUser;
 
   @override
   Widget build(BuildContext context) {
@@ -76,16 +84,15 @@ class CustomDrawer extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 80.0),
                 child: Align(
                   alignment: FractionalOffset.bottomCenter,
-                  child: _buildDrawerItems(
-                    Icon(Icons.logout),
-                    'LogOut',
-                    () => Navigator.of(context, rootNavigator: true)
-                        .pushReplacement(
+                  child:
+                      _buildDrawerItems(Icon(Icons.logout), 'LogOut', () async {
+                    await clearDatabase();
+                    Navigator.of(context, rootNavigator: true).pushReplacement(
                       new CupertinoPageRoute(
                         builder: (BuildContext context) => new MyApp(),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
                 ),
               ),
             ),

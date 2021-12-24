@@ -1,4 +1,4 @@
-import 'package:flut_news/data/UserSource.dart';
+import 'package:flut_news/data/db/UserDataSource.dart';
 import 'package:flut_news/screens/widgets/custom_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -34,6 +34,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  final user = UserDataSource.loggedInUser;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,17 +77,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                   Text(
-                    user!.firstName + ' ' + user!.lastName,
+                    user!.username,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    '#' + user!.username,
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.grey,
                     ),
                   ),
                   SizedBox(
@@ -117,7 +111,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     height: 5,
                                   ),
                                   Text(
-                                    dateTimeConvertor(user!.joinDate),
+                                    '20-10-2001',
                                     style: TextStyle(
                                       fontSize: 17,
                                       color: Colors.black87,

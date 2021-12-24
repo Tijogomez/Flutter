@@ -4,7 +4,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'details_page.dart';
-import '../data/News.dart';
+import '../data/model/News.dart';
+import '../data/db/NewsDataSource.dart';
 
 final List categories = [
   'All',
@@ -22,78 +23,80 @@ final List categories = [
   'Automobile',
 ];
 
-void saveToPref(selectedIndex) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.setInt('selectedIndex', selectedIndex);
-}
-
-void getSelectedCategoryIndexFromPref() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  int index = await prefs.getInt('selectedIndex') ?? 0;
-  selectedCategory = index;
-}
-
-var snapshotData;
-List favList = [];
-List allNews = [];
-List filteredNews = [];
-bool _isInSearchMode = false;
-
-SharedPreferences? savedCategory;
-int selectedCategory = (savedCategory?.getInt('selectedIndex') ?? 0);
-
-void searchNews(text) {
-  if (text.isEmpty) {
-    filteredNews.clear();
-    return;
-  }
-  filteredNews.clear();
-  filteredNews.addAll(allNews.where((news) => news.title.contains(text)));
-}
-
-String url =
-    'https://inshortsapi.vercel.app/news?category=${categories[selectedCategory].toString().toLowerCase()}';
-
-Future _fetchApi() async {
-  // print(selectedCategory);
-  final response = await http.get(Uri.parse(url));
-  if (response.statusCode == 200) {
-    final body = json.decode(response.body);
-    List news = body['data']
-        .map((news) => News(
-            news['title'], news['author'], news['content'], news['imageUrl']))
-        .toList();
-    allNews = news;
-    return true;
-  } else {
-    return false;
-    // throw Exception('Failed to load');
-  }
-}
-
 class HomeScreen extends StatefulWidget {
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Future<void> initializePreference() async {
-    savedCategory = await SharedPreferences.getInstance();
+  final NewsDataSource dataSource = NewsDataSource();
+
+  String categorySelected = categories[0];
+
+  String searchQuery = "";
+
+  Future refreshList() async {
+    print("Refreshing News");
+    String url =
+        'https://inshortsapi.vercel.app/news?category=${categorySelected.toLowerCase()}';
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final body = json.decode(response.body);
+      List news = body['data']
+          .map((news) => News(
+              title: news['title'],
+              author: news['author'],
+              category: categorySelected,
+              content: news['content'],
+              imageUrl: news['imageUrl'],
+              isFavourite: false))
+          .toList();
+
+      for (var news in news) {
+        dataSource.insertNews(news);
+      }
+    }
+  }
+
+  Future<List<News>> getNewsFromDb() async {
+    final result =
+        await dataSource.getAllNewsForCategory(categorySelected, searchQuery);
+
+    print("DB News Empty - ${result.isEmpty}");
+
+    if (result.isEmpty) {
+      await refreshList();
+    }
+    return await dataSource.getAllNewsForCategory(
+        categorySelected, searchQuery);
+  }
+
+  void onQueryChange(String query) {
+    setState(() {
+      searchQuery = query;
+    });
+  }
+
+  void setCategory(int index) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('selectedIndex', index);
+    setState(() {
+      categorySelected = categories[index];
+      // savedCategory?.setInt('selectedCategory', selectedCategory);
+      // url =
+      //    'https://inshortsapi.vercel.app/news?category=${categories[selectedCategory].toString().toLowerCase()}';
+    });
+  }
+
+  void getSelectedCategoryIndexFromPref() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int index = await prefs.getInt('selectedIndex') ?? 0;
+    categorySelected = categories[index];
   }
 
   void initState() {
     super.initState();
     getSelectedCategoryIndexFromPref();
-    // initializePreference().whenComplete(() => setState(() {}));
-  }
-
-  void setCategory(int index) {
-    setState(() {
-      selectedCategory = index;
-      url =
-          'https://inshortsapi.vercel.app/news?category=${categories[selectedCategory].toString().toLowerCase()}';
-      savedCategory?.setInt('selectedCategory', selectedCategory);
-    });
   }
 
   @override
@@ -128,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onFocusChange: (hasFocus) {},
                     child: TextField(
                       onChanged: (text) {
-                        searchNews(text);
+                        onQueryChange(text);
                       },
                       decoration: InputDecoration(
                         contentPadding: EdgeInsets.symmetric(vertical: 15.0),
@@ -140,14 +143,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         prefixIcon: Icon(
                           Icons.search,
                           size: 30.0,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(Icons.check),
-                          onPressed: () {
-                            setState(() {
-                              _isInSearchMode = filteredNews.isNotEmpty;
-                            });
-                          },
                         ),
                       ),
                     ),
@@ -186,12 +181,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                       EdgeInsets.symmetric(horizontal: 1.0),
                                   child: Center(
                                     child: Card(
-                                      color: selectedCategory == index
-                                          ? Colors.white
-                                          : Colors.blueAccent,
+                                      color:
+                                          categorySelected == categories[index]
+                                              ? Colors.white
+                                              : Colors.blueAccent,
                                       child: InkWell(
                                         onTap: () {
-                                          saveToPref(index);
                                           setCategory(index);
                                         },
                                         splashColor: Colors.white30,
@@ -200,7 +195,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                           child: Text(
                                             categories[index],
                                             style: TextStyle(
-                                              color: selectedCategory == index
+                                              color: categorySelected ==
+                                                      categories[index]
                                                   ? Colors.blueAccent
                                                   : Colors.white,
                                               fontWeight: FontWeight.bold,
@@ -231,10 +227,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     FutureBuilder(
-                      future: _fetchApi(),
+                      future: getNewsFromDb(),
                       builder: (BuildContext context, AsyncSnapshot snapshot) {
                         if (snapshot.connectionState == ConnectionState.done) {
-                          snapshotData = snapshot.data;
+                          final snapshotData = snapshot.data;
                           return Container(
                             height: MediaQuery.of(context).size.height * 0.572,
                             width: MediaQuery.of(context).size.width,
@@ -243,26 +239,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                   const EdgeInsets.symmetric(vertical: 12.0),
                               child: ListView.builder(
                                 shrinkWrap: true,
-                                itemCount: _isInSearchMode
-                                    ? filteredNews.length
-                                    : allNews.length,
+                                itemCount: snapshotData.length,
                                 itemBuilder: (BuildContext context, int index) {
                                   return Card(
                                     child: ListTile(
                                       leading: Image.network(
-                                        _isInSearchMode
-                                            ? filteredNews[index].imageUrl
-                                            : allNews[index].imageUrl,
+                                        snapshotData[index].imageUrl,
                                         height: 50.0,
                                         width: 60.0,
                                         fit: BoxFit.cover,
                                       ),
                                       title: Text(
-                                        _isInSearchMode
-                                            ? filteredNews[index]
-                                                .title
-                                                .toString()
-                                            : allNews[index].title.toString(),
+                                        snapshotData[index].title.toString(),
                                         style: TextStyle(
                                           fontSize: 15.0,
                                           fontWeight: FontWeight.w600,
@@ -271,37 +259,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                       onTap: () {
                                         Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
+                                            context,
+                                            MaterialPageRoute(
                                               builder: (context) => DetailPage(
-                                                  author: _isInSearchMode
-                                                      ? filteredNews[index]
-                                                          .author
-                                                      : allNews[index].author,
-                                                  title: _isInSearchMode
-                                                      ? filteredNews[index]
-                                                          .title
-                                                      : allNews[index].title,
-                                                  imageUrl: _isInSearchMode
-                                                      ? filteredNews[index]
-                                                          .imageUrl
-                                                      : allNews[index].imageUrl,
-                                                  content: _isInSearchMode
-                                                      ? filteredNews[index]
-                                                          .content
-                                                      : allNews[index].content,
-                                                  isFavourite: _isInSearchMode
-                                                      ? filteredNews[index]
-                                                          .isFavourite
-                                                      : allNews[index]
-                                                          .isFavourite,
-                                                  onFavouriteClick:
-                                                      ((isFavourite) => {
-                                                            allNews[index]
-                                                                    .isFavourite =
-                                                                isFavourite
-                                                          }))),
-                                        );
+                                                  title: snapshotData[index]
+                                                      .title),
+                                            ));
                                       },
                                     ),
                                   );
@@ -310,7 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           );
                         } else {
-                          return Padding(
+                          return const Padding(
                             padding: const EdgeInsets.only(top: 50.0),
                             child: Center(
                               child: CircularProgressIndicator(),
