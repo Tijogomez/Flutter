@@ -55,11 +55,16 @@ class UserDataSource {
     }
   }
 
-  Future updateUserPassword(String username, String newPassword) async {
+  Future<bool> updateUserPassword(String username, String newPassword) async {
     final Database db = await FlutNewsDatabase.instance.database;
 
-    await db.rawUpdate(
-        "UPDATE $UserTableName SET password = ? WHERE username = ?",
-        [newPassword, username]);
+    try {
+      await db.rawUpdate(
+          "UPDATE $UserTableName SET password = ? WHERE username = ?",
+          [newPassword, username]);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 }

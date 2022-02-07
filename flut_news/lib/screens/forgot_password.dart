@@ -19,8 +19,7 @@ class _ForgotPWState extends State<ForgotPW> {
 
     if (password != confirmedPassword) return false;
 
-    await dataSource.updateUserPassword(username, confirmedPassword);
-    return true;
+    return await dataSource.updateUserPassword(username, confirmedPassword);
   }
 
   @override

@@ -3,7 +3,6 @@ import 'package:flut_news/screens/dashboard.dart';
 import 'package:flut_news/screens/signup_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-
 import 'forgot_password.dart';
 
 class LoginScreen extends StatefulWidget {
